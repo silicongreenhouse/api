@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/silicongreenhouse/api/src/executors"
 	"github.com/silicongreenhouse/api/src/stores"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,11 +15,12 @@ import (
 )
 
 var App *fiber.App
-var config = stores.UseConfig()
+var config stores.ConfigStore
 
 func init() {
 	godotenv.Load()
 
+	config = stores.UseConfig()
 	err := config.Load(os.Getenv("CONFIG_PATH"))
 	if err != nil {
 		log.Fatal(err)
@@ -30,4 +32,5 @@ func init() {
 	}))
 
 	App.Mount("/api/sensors", sensors.Router)
+	App.Mount("/api/executors", executors.Router)
 }
