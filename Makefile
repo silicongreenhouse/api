@@ -11,7 +11,7 @@ arm: $(MAIN)
 	env GOOS=linux GOARCH=arm GOARM=5 go build -o $(BIN)-arm .
 
 dev: $(MAIN)
-	CompileDaemon -build="make" -command="$(BIN)"
+	CompileDaemon -build="make" -command="$(BIN) -p 3000"
 
 clean:
 	rm -rf bin/
