@@ -13,6 +13,6 @@ func main() {
 	flag.Parse()
 	port = *portFlag
 
-	log.Println("Listening on port 3000")
+	log.Printf("Listening on port %d\n", port)
 	log.Fatal(App.Listen(fmt.Sprintf(":%d", port)))
 }
