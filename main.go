@@ -1,8 +1,18 @@
 package main
 
-import "log"
+import (
+	"flag"
+	"fmt"
+	"log"
+)
+
+var port int
 
 func main() {
-    log.Println("Listening on port 3000")
-    log.Fatal(App.Listen(":3000"))
+	portFlag := flag.Int("port", 80, "Defines the port where the server listen")
+	flag.Parse()
+	port = *portFlag
+
+	log.Println("Listening on port 3000")
+	log.Fatal(App.Listen(fmt.Sprintf(":%d", port)))
 }
