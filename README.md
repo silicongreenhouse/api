@@ -12,5 +12,5 @@ make dev
 
 Compile it.
 ```bash
-make dev
+make
 ```
