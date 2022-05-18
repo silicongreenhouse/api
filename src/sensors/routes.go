@@ -10,6 +10,8 @@ var config stores.ConfigStore
 
 func init() {
 	Router = fiber.New()
+	Router.Get("/", getSensors)
+	Router.Get("/:id", getSensorById)
 	Router.Get("/:id/events", checkSensor, getEvents)
 	Router.Put("/:id/events", checkSensor, validateEventData, editEvent)
 	Router.Delete("/:id/events/:eventId", checkSensor, deleteEvent)
