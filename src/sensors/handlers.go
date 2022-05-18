@@ -8,14 +8,25 @@ import (
 	"github.com/silicongreenhouse/api/src/models"
 )
 
-func getEvents(c *fiber.Ctx) error {
-	sensor := models.Sensor{}
+func getSensors(c *fiber.Ctx) error {
+	return c.JSON(config.Sensors)
+}
 
-	for _, sen := range config.Sensors {
-		if sen.Id == c.Params("id") {
-			sensor = sen
-		}
+func getSensorById(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	err, sensor := findSensor(id)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map {
+			"err": "Sensor not found",
+		})
 	}
+
+	return c.JSON(sensor)
+}
+
+func getEvents(c *fiber.Ctx) error {
+	_, sensor := findSensor(c.Params("id"))
 
 	return c.JSON(sensor.Events)
 }

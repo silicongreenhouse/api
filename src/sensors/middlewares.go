@@ -8,18 +8,8 @@ import (
 func checkSensor(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	sensors := config.Sensors
-
-	found := false
-
-	for _, sen := range sensors {
-		if sen.Id == id {
-			found = true
-			break
-		}
-	}
-
-	if !found {
+	err, _ := findSensor(id)
+	if err != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"err": "Sensor not found",
 		})

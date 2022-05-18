@@ -45,3 +45,15 @@ func createNewId(sensorId string, executorId string) (string, error) {
 func deleteElement[T any](slice *[]T, index int) {
 	*slice = append((*slice)[:index], (*slice)[index + 1:]...)
 }
+
+func findSensor(id string) (error, models.Sensor) {
+	for _, sen := range config.Sensors {
+		if sen.Id == id {
+			return nil, sen
+		}
+	}
+
+	return fmt.Errorf("Sensor not found"), models.Sensor{}
+}
+
+
