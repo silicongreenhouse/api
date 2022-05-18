@@ -8,7 +8,7 @@ build: $(MAIN)
 	go build -o $(BIN)
 
 arm: $(MAIN)
-	env GOOS=linux GOARCH=arm GOARM=5 go build -o $(BIN) .
+	env GOOS=linux GOARCH=arm GOARM=5 go build -o $(BIN)-arm .
 
 dev: $(MAIN)
 	CompileDaemon -build="make" -command="$(BIN)"
