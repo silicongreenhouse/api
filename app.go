@@ -9,6 +9,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
 
 	"github.com/silicongreenhouse/api/src/sensors"
@@ -30,6 +31,7 @@ func init() {
 	App.Use(cors.New(cors.Config{
 		AllowHeaders: "Content-Type, Authorization, Origin, x-access-token, XSRF-TOKEN",
 	}))
+	App.Use(logger.New())
 
 	App.Mount("/api/sensors", sensors.Router)
 	App.Mount("/api/executors", executors.Router)
