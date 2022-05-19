@@ -31,6 +31,28 @@ func getEvents(c *fiber.Ctx) error {
 	return c.JSON(sensor.Events)
 }
 
+func getEventById(c *fiber.Ctx) error {
+	_, sensor := findSensor(c.Params("id"))
+	events := sensor.Events
+	var desiredEvent models.Event
+	found := false
+
+	for _, event := range events {
+		if event.Id == c.Params("eventId") {
+			desiredEvent = event
+			found = true
+		}
+	}
+
+	if !found {
+		return c.Status(400).JSON(fiber.Map{
+			"err": "Event not found",
+		})
+	}
+
+	return c.JSON(desiredEvent)
+}
+
 
 
 
