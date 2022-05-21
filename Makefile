@@ -8,7 +8,7 @@ build: $(MAIN)
 	make linux
 	make arm
 	make windows
-	make mac
+	make macos
 
 arm: $(MAIN)
 	env GOOS=linux GOARCH=arm GOARM=5 go build -o $(BIN)-arm .
