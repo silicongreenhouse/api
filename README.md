@@ -10,7 +10,7 @@ Developer mode. [CompileDaemon](https://github.com/githubnemo/CompileDaemon) hav
 make dev
 ```
 
-Compile it.
-```bash
-make
-```
+You can compile it using makefile or download a precompile binary in release page.
+
+## Prerequisites
+To run the api download the config file and set the an environment `CONFIG_PATH` vairable with the path to the config path
