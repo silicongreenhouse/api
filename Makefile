@@ -23,7 +23,7 @@ linux: $(MAIN)
 	env GOOS=linux GOARCH=amd64 go build -o $(BIN)-linux .
 
 dev: $(MAIN)
-	CompileDaemon -build="make linux" -command="$(BIN)-linux -port 3000"
+	CompileDaemon -build="go build -o $(BIN)-env" -command="$(BIN)-env -port 3000"
 
 clean:
 	rm -rf bin/
