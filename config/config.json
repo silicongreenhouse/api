@@ -1,0 +1,31 @@
+{
+  "sensors": [
+    {
+      "id": "s1",
+      "name": "DHT temperature sensor",
+      "short_name": "DHT"
+    },
+    {
+      "id": "s2",
+      "name": "Water level",
+      "short_name": "WL"
+    },
+    {
+      "id": "s3",
+      "name": "Floor humidity",
+      "short_name": "FH"
+    }
+  ],
+  "executors": [
+    {
+      "id": "e1",
+      "name": "input and output fans",
+      "short_name": "iofan"
+    },
+    {
+      "id": "e2",
+      "name": "water pump",
+      "short_name": "wp"
+    }
+  ]
+}

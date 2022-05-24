@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 
 	"github.com/silicongreenhouse/api/src/executors"
 	"github.com/silicongreenhouse/api/src/stores"
@@ -20,6 +21,7 @@ import (
 var App *fiber.App
 var config stores.ConfigStore
 var socketsChannel = make(chan []byte)
+var clientConnected = false
 
 func init() {
 	godotenv.Load()
@@ -49,9 +51,11 @@ func init() {
 			}
 
 			log.Printf("Message: %s", message)
-			go func() {
+
+			if clientConnected {
 				socketsChannel <- message
-			}()
+			}
+
 			returnMessage := fmt.Sprintf("Message from server: %s", message)
 
 			err = c.WriteMessage(messageType, []byte(returnMessage))
@@ -63,13 +67,52 @@ func init() {
 	}))
 
 	App.Get("/ws_client", websocket.New(func(c *websocket.Conn) {
-		for message := range socketsChannel {
-			err = c.WriteMessage(websocket.TextMessage, []byte(message))
+		clientConnected = true
+		wg := sync.WaitGroup{}
+		wg.Add(2)
+
+		go func() {
+			err := dataStreamHandler(c)
 			if err != nil {
 				log.Println(err)
-				break
 			}
-		}
-		defer c.Close()
+			wg.Done()
+		}()
+		go func() {
+			err := executorsHandler(c)
+			if err != nil {
+				log.Println(err)
+			}
+			wg.Done()
+		}()
+
+		wg.Wait()
 	}))
+}
+
+func executorsHandler(c *websocket.Conn) error {
+	var err error
+	var message map[string]interface{}
+	for {
+		err = c.ReadJSON(&message)
+		fmt.Println(message)
+		if err != nil {
+			clientConnected = false
+			break
+		}
+	}
+	return err
+}
+
+func dataStreamHandler(c *websocket.Conn) error {
+	var err error
+	for message := range socketsChannel {
+		err = c.WriteMessage(websocket.TextMessage, []byte(message))
+		if err != nil {
+			clientConnected = false
+			break
+		}
+	}
+	defer c.Close()
+	return err
 }
