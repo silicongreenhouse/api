@@ -1,10 +1,9 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"log"
 	"os"
-	"sync"
 
 	"github.com/silicongreenhouse/api/src/executors"
 	"github.com/silicongreenhouse/api/src/stores"
@@ -20,8 +19,13 @@ import (
 
 var App *fiber.App
 var config stores.ConfigStore
-var socketsChannel = make(chan []byte)
+var streamDataChannel = make(chan []byte)
+var remoteControllerChannel = make(chan []byte)
+
 var clientConnected = false
+var clientControllerConnected = false
+var raspberryConnected = false
+var raspberryControllerConnected = false
 
 func init() {
 	godotenv.Load()
@@ -43,23 +47,45 @@ func init() {
 
 	// Websockets requests
 	App.Get("/ws_raspberry", websocket.New(func(c *websocket.Conn) {
+		raspberryConnected = true
 		for {
-			messageType, message, err := c.ReadMessage()
-			log.Println("Message type:", messageType)
+			_, message, err := c.ReadMessage()
 			if err != nil {
+				log.Println(err)
+				raspberryConnected = false
 				break
 			}
 
-			log.Printf("Message: %s", message)
-
 			if clientConnected {
-				socketsChannel <- message
+				streamDataChannel <- message
 			}
 
-			returnMessage := fmt.Sprintf("Message from server: %s", message)
-
-			err = c.WriteMessage(messageType, []byte(returnMessage))
+			returnMessage, jsonError := json.Marshal(fiber.Map{
+				"msg": "Data sent succesfully bitch",
+			})
+			if jsonError != nil {
+				log.Println(jsonError)
+				c.Close()
+				break
+			}
+			err = c.WriteMessage(websocket.TextMessage, returnMessage)
 			if err != nil {
+				log.Println(err)
+				raspberryConnected = false
+				break
+			}
+		}
+
+		defer c.Close()
+	}))
+
+	App.Get("/ws_raspberry_controller", websocket.New(func(c *websocket.Conn) {
+		raspberryControllerConnected = true
+		for message := range remoteControllerChannel {
+			log.Println(message)
+			err := c.WriteMessage(websocket.TextMessage, []byte(message))
+			if err != nil {
+				raspberryConnected = false
 				break
 			}
 		}
@@ -68,51 +94,43 @@ func init() {
 
 	App.Get("/ws_client", websocket.New(func(c *websocket.Conn) {
 		clientConnected = true
-		wg := sync.WaitGroup{}
-		wg.Add(2)
-
-		go func() {
-			err := dataStreamHandler(c)
+		for message := range streamDataChannel {
+			err := c.WriteMessage(websocket.TextMessage, []byte(message))
 			if err != nil {
-				log.Println(err)
+				clientConnected = false
+				break
 			}
-			wg.Done()
-		}()
-		go func() {
-			err := executorsHandler(c)
-			if err != nil {
-				log.Println(err)
-			}
-			wg.Done()
-		}()
-
-		wg.Wait()
+		}
+		defer c.Close()
 	}))
-}
 
-func executorsHandler(c *websocket.Conn) error {
-	var err error
-	var message map[string]interface{}
-	for {
-		err = c.ReadJSON(&message)
-		fmt.Println(message)
-		if err != nil {
-			clientConnected = false
-			break
-		}
-	}
-	return err
-}
+	App.Get("ws_client_controller", websocket.New(func(c *websocket.Conn) {
+		clientControllerConnected = true
+		for {
+			_, message, err := c.ReadMessage()
+			if err != nil {
+				clientControllerConnected = false
+				break
+			}
 
-func dataStreamHandler(c *websocket.Conn) error {
-	var err error
-	for message := range socketsChannel {
-		err = c.WriteMessage(websocket.TextMessage, []byte(message))
-		if err != nil {
-			clientConnected = false
-			break
+			if raspberryControllerConnected {
+				remoteControllerChannel <- message
+			}
+
+			returnMessage, jsonErr := json.Marshal(fiber.Map{
+				"msg": "Data sent succesfully",
+			})
+			if jsonErr != nil {
+				c.Close()
+				break
+			}
+
+			err = c.WriteMessage(websocket.TextMessage, returnMessage)
+			if err != nil {
+				clientConnected = false
+				continue
+			}
 		}
-	}
-	defer c.Close()
-	return err
+		defer c.Close()
+	}))
 }
