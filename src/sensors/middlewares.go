@@ -20,7 +20,7 @@ func checkSensor(c *fiber.Ctx) error {
 
 func validateEventData(c *fiber.Ctx) error {
 	event := models.Event{}
-	executors := config.Executors
+	executors := config.State.Executors
 
 	err := c.BodyParser(&event)
 

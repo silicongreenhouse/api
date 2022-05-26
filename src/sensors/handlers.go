@@ -9,7 +9,7 @@ import (
 )
 
 func getSensors(c *fiber.Ctx) error {
-	return c.JSON(config.Sensors)
+	return c.JSON(config.State.Sensors)
 }
 
 func getSensorById(c *fiber.Ctx) error {
@@ -74,11 +74,11 @@ func editEvent(c *fiber.Ctx) error {
 
 		event.Id = newId
 
-		for index, ev := range config.Sensors {
+		for index, ev := range config.State.Sensors {
 			if ev.Id == c.Params("id") {
-				sensor = config.Sensors[index]
+				sensor = config.State.Sensors[index]
 				sensor.Events = append(sensor.Events, event)
-				config.Sensors[index] = sensor
+				config.State.Sensors[index] = sensor
 				break
 			}
 		}
@@ -93,7 +93,7 @@ func editEvent(c *fiber.Ctx) error {
 		returnMessage = "Event created succesfully"
 		// If an id is passed then update the passed event
 	} else {
-		sensors := config.Sensors
+		sensors := config.State.Sensors
 
 		// Getting sensor
 		for _, sen := range sensors {
@@ -127,9 +127,9 @@ func editEvent(c *fiber.Ctx) error {
 		}
 
 		// updating event
-		for index, sen := range config.Sensors {
+		for index, sen := range config.State.Sensors {
 			if sen.Id == c.Params("id") {
-				config.Sensors[index] = sensor
+				config.State.Sensors[index] = sensor
 			}
 		}
 
@@ -154,7 +154,7 @@ func deleteEvent(c *fiber.Ctx) error {
 	eventFound := false
 
 	// Getting sensor
-	for i, sen := range config.Sensors {
+	for i, sen := range config.State.Sensors {
 		if sen.Id == c.Params("id") {
 			sensor = sen
 			sensorIndex = i
@@ -175,7 +175,7 @@ func deleteEvent(c *fiber.Ctx) error {
 		})
 	}
 	
-	config.Sensors[sensorIndex] = sensor
+	config.State.Sensors[sensorIndex] = sensor
 	config.Write(os.Getenv("CONFIG_PATH"))
 	
 	return c.JSON(fiber.Map {

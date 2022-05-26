@@ -10,7 +10,7 @@ import (
 
 func createNewId(sensorId string, executorId string) (string, error) {
 	newId := ""
-	sensors := config.Sensors
+	sensors := config.State.Sensors
 	var events []models.Event
 
 	// Fill the events variable with the current sensor events
@@ -47,7 +47,7 @@ func deleteElement[T any](slice *[]T, index int) {
 }
 
 func findSensor(id string) (error, models.Sensor) {
-	for _, sen := range config.Sensors {
+	for _, sen := range config.State.Sensors {
 		if sen.Id == id {
 			return nil, sen
 		}

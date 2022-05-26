@@ -5,7 +5,7 @@ import (
 )
 
 func getExecutors(c *fiber.Ctx) error {
-	return c.JSON(config.Executors)
+	return c.JSON(config.State.Executors)
 }
 
 

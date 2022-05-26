@@ -12,18 +12,22 @@ import (
 
 var config *ConfigState
 
+type Signal bool
+
 type ConfigState struct {
 	Sensors   []models.Sensor   `json:"sensors"`
 	Executors []models.Executor `json:"executors"`
 }
 
 type ConfigStore struct {
-	*ConfigState
+	State *ConfigState
+	signalChannel chan Signal
 }
 
 func UseConfig() ConfigStore {
 	return ConfigStore{
-		config,
+		State: config,
+		signalChannel: make(chan Signal),
 	}
 }
 
@@ -33,7 +37,7 @@ func (self *ConfigStore) Load(path string) error {
 		return fmt.Errorf("Cannot read file %s", path)
 	}
 
-	err = json.Unmarshal(file, self)
+	err = json.Unmarshal(file, &self.State)
 
 	return err
 }
