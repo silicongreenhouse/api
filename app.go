@@ -22,11 +22,6 @@ var config stores.ConfigStore
 var streamDataChannel = make(chan []byte)
 var remoteControllerChannel = make(chan []byte)
 
-var clientConnected = false
-var clientControllerConnected = false
-var raspberryConnected = false
-var raspberryControllerConnected = false
-
 func init() {
 	godotenv.Load()
 
@@ -42,37 +37,51 @@ func init() {
 	}))
 	App.Use(logger.New())
 
+	App.Static("/control_panel", staticFolder)
+
 	App.Mount("/api/sensors", sensors.Router)
 	App.Mount("/api/executors", executors.Router)
 
 	// Websockets requests
+	App.Get("/ws_trigger", websocket.New(func(c *websocket.Conn) {
+		stores.RaspberryConnected = true
+		defer c.Close()
+		for {
+			select {
+			case msg := <-config.SignalChannel:
+				if msg {
+					returnMessage, jsonError := json.Marshal(fiber.Map{
+						"msg": "ConfigChanged",
+					})
+					if err != nil {
+						log.Println(jsonError)
+						c.Close()
+						break
+					}
+
+					err = c.WriteMessage(websocket.TextMessage, returnMessage)
+					if err != nil {
+						log.Println(err)
+						stores.RaspberryConnected = false
+						break
+					}
+				}
+			}
+		}
+	}))
+
 	App.Get("/ws_raspberry", websocket.New(func(c *websocket.Conn) {
-		raspberryConnected = true
+		stores.RaspberryConnected = true
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
 				log.Println(err)
-				raspberryConnected = false
+				stores.RaspberryConnected = false
 				break
 			}
 
-			if clientConnected {
+			if stores.ClientConnected {
 				streamDataChannel <- message
-			}
-
-			returnMessage, jsonError := json.Marshal(fiber.Map{
-				"msg": "Data sent succesfully bitch",
-			})
-			if jsonError != nil {
-				log.Println(jsonError)
-				c.Close()
-				break
-			}
-			err = c.WriteMessage(websocket.TextMessage, returnMessage)
-			if err != nil {
-				log.Println(err)
-				raspberryConnected = false
-				break
 			}
 		}
 
@@ -80,12 +89,12 @@ func init() {
 	}))
 
 	App.Get("/ws_raspberry_controller", websocket.New(func(c *websocket.Conn) {
-		raspberryControllerConnected = true
+		stores.RaspberryControllerConnected = true
 		for message := range remoteControllerChannel {
 			log.Println(message)
 			err := c.WriteMessage(websocket.TextMessage, []byte(message))
 			if err != nil {
-				raspberryConnected = false
+				stores.RaspberryConnected = false
 				break
 			}
 		}
@@ -93,11 +102,11 @@ func init() {
 	}))
 
 	App.Get("/ws_client", websocket.New(func(c *websocket.Conn) {
-		clientConnected = true
+		stores.ClientConnected = true
 		for message := range streamDataChannel {
 			err := c.WriteMessage(websocket.TextMessage, []byte(message))
 			if err != nil {
-				clientConnected = false
+				stores.ClientConnected = false
 				break
 			}
 		}
@@ -105,15 +114,15 @@ func init() {
 	}))
 
 	App.Get("/ws_client_controller", websocket.New(func(c *websocket.Conn) {
-		clientControllerConnected = true
+		stores.ClientControllerConnected = true
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				clientControllerConnected = false
+				stores.ClientControllerConnected = false
 				break
 			}
 
-			if raspberryControllerConnected {
+			if stores.RaspberryControllerConnected {
 				remoteControllerChannel <- message
 			}
 
@@ -127,7 +136,7 @@ func init() {
 
 			err = c.WriteMessage(websocket.TextMessage, returnMessage)
 			if err != nil {
-				clientConnected = false
+				stores.ClientConnected = false
 				continue
 			}
 		}

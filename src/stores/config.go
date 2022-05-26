@@ -13,6 +13,12 @@ import (
 var config *ConfigState
 
 type Signal bool
+var signalchannel = make(chan Signal)
+
+var ClientConnected = false
+var ClientControllerConnected = false
+var RaspberryConnected = false
+var RaspberryControllerConnected = false
 
 type ConfigState struct {
 	Sensors   []models.Sensor   `json:"sensors"`
@@ -21,13 +27,13 @@ type ConfigState struct {
 
 type ConfigStore struct {
 	State *ConfigState
-	signalChannel chan Signal
+	SignalChannel chan Signal
 }
 
 func UseConfig() ConfigStore {
 	return ConfigStore{
 		State: config,
-		signalChannel: make(chan Signal),
+		SignalChannel: signalchannel,
 	}
 }
 
@@ -51,10 +57,14 @@ func (self *ConfigStore) Write(path string) error {
 	defer file.Close()
 
 	encoder := json.NewEncoder(file)
-	err = encoder.Encode(self)
+	err = encoder.Encode(&self.State)
 	if err != nil {
 		log.Println(err)
 		return fmt.Errorf("Error writing file")
+	}
+
+	if RaspberryConnected {
+		self.SignalChannel <- true
 	}
 
 	return nil
