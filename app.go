@@ -104,7 +104,7 @@ func init() {
 		defer c.Close()
 	}))
 
-	App.Get("ws_client_controller", websocket.New(func(c *websocket.Conn) {
+	App.Get("/ws_client_controller", websocket.New(func(c *websocket.Conn) {
 		clientControllerConnected = true
 		for {
 			_, message, err := c.ReadMessage()
