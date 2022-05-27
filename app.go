@@ -12,7 +12,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/websocket/v2"
-	"github.com/joho/godotenv"
 
 	"github.com/silicongreenhouse/api/src/sensors"
 )
@@ -23,8 +22,6 @@ var streamDataChannel = make(chan []byte)
 var remoteControllerChannel = make(chan []byte)
 
 func init() {
-	godotenv.Load()
-
 	config = stores.UseConfig()
 	err := config.Load(os.Getenv("CONFIG_PATH"))
 	if err != nil {
@@ -35,6 +32,7 @@ func init() {
 	App.Use(cors.New(cors.Config{
 		AllowHeaders: "Content-Type, Authorization, Origin, x-access-token, XSRF-TOKEN",
 	}))
+
 	App.Use(logger.New())
 
 	App.Static("/control_panel", staticFolder)
